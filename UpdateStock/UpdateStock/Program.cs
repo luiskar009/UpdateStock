@@ -249,16 +249,17 @@ namespace UpdateStock
                 {
                     foreach (String element in list)
                     {
-                        MySqlCommand cmd = new MySqlCommand($"SELECT Stock FROM InventarioTablas WHERE id_product = '{element}'", conn);
+                        MySqlCommand cmd = new MySqlCommand($"SELECT Stock, id_product_attribute FROM InventarioTablas WHERE id_product = '{element}'", conn);
                         if (conn.State == ConnectionState.Closed)
                             conn.Open();
                         using (MySqlDataReader rdr = cmd.ExecuteReader())
                         {
                             rdr.Read();
-                            String Stock = rdr[0].ToString();
+                            String Stock = rdr["Stock"].ToString();
+                            String id_product_attribute = rdr["id_product_attribute"].ToString();
                             if (conn.State == ConnectionState.Open)
                                 conn.Close();
-                            MySqlCommand cmd2 = new MySqlCommand($"UPDATE ps_stock_available SET quantity = '{Stock}' WHERE id_product  = '{element}'", conn);
+                            MySqlCommand cmd2 = new MySqlCommand($"UPDATE ps_stock_available SET quantity = '{Stock}' WHERE id_product  = '{element}' AND id_product_attribute = '{id_product_attribute}'", conn);
                             if (conn.State == ConnectionState.Closed)
                                 conn.Open();
                             cmd2.ExecuteNonQuery();
