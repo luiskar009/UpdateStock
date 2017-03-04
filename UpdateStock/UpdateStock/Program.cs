@@ -28,7 +28,9 @@ namespace UpdateStock
 
             /* Save the articules to update stock in a list */
 
-            createList(connStringMySql);
+            List<String> listArticules = createListArticules(connStringMySql);
+            updateInventoryTable(connStringMySql, connStringSqlServer, listArticules);
+            List<String> listIdProducts = createListArticules(connStringMySql);
         }
 
         /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -37,7 +39,7 @@ namespace UpdateStock
         ///                                                                                                                   ///
         /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-        public static List<String> createList(String connStringMySql)
+        public static List<String> createListArticules(String connStringMySql)
         {
             List<String> list = new List<string>();
             using (MySqlConnection conn = new MySqlConnection(connStringMySql.ToString()))
@@ -88,6 +90,28 @@ namespace UpdateStock
             }
         }//updateInventoryTable
 
+        /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+        ///                                                                                                                   ///
+        ///                             Create a List with the id_products to update the stock                                  ///
+        ///                                                                                                                   ///
+        /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+        public static List<String> createListIdProducts(String connStringMySql)
+        {
+            List<String> list = new List<string>();
+            using (MySqlConnection conn = new MySqlConnection(connStringMySql))
+            {
+                MySqlCommand cmd = new MySqlCommand("SELECT id_products FROM InventarioTablas", conn);
+                conn.Open();
+                using (MySqlDataReader rdr = cmd.ExecuteReader())
+                {
+                    while (rdr.Read())
+                    {
+                        list.Add(rdr["id_products"].ToString());
+                    }
+                }
+            }
+            return list;
+        }//createListIdProducts
     }
 }
