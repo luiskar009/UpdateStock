@@ -32,21 +32,56 @@ namespace UpdateStock
 
             String connStringSqlServer = ConfigurationManager.ConnectionStrings["SqlServer"].ConnectionString;
 
+            /* Program Directory */
+
+            String path = $"{Path.GetPathRoot(Environment.GetFolderPath(Environment.SpecialFolder.System))}UpdateStock";
+            if (!(Directory.Exists(path)))
+                Directory.CreateDirectory(path);
+            if (!(Directory.Exists($"{path}\\LOG")))
+                Directory.CreateDirectory($"{path}\\LOG");
+
+            /* Inicialize LOG */
+
+            using (StreamWriter writer = new StreamWriter($@"{path}\\LOG\\{DateTime.Now.ToString("dd-MM-yyyy")}.log", true))
+            {
+                writer.WriteLine("día:" + DateTime.Now.ToString("dd-MM-yyyy") + "  hora:" + DateTime.Now.ToString("HH:mm:ss") + " - Arrancando aplicacion");
+            }
+
             /* Save the articules to update stock in a list */
 
-            List<String> listArticules = createListArticules(connStringMySql);
+            List<String> listArticules = createListArticules(connStringMySql, path);
 
             /* Update table InventarioTablas */
 
-            updateInventoryTable(connStringMySql, connStringSqlServer, listArticules);
+            List<String> listArticulesUpdated = updateInventoryTable(connStringMySql, connStringSqlServer, listArticules, path);
 
             /* Save the id_products to update stock in a list */
 
-            List<String> listIdProducts = createListIdProducts(connStringMySql);
+            if (listArticulesUpdated.Count == 0)
+            {
+                using (StreamWriter writer = new StreamWriter($@"{path}\\LOG\\{DateTime.Now.ToString("dd-MM-yyyy")}.log", true))
+                {
+                    writer.WriteLine("día:" + DateTime.Now.ToString("dd-MM-yyyy") + "  hora:" + DateTime.Now.ToString("HH:mm:ss") + " - Ningun producto necesita actualizacion. Finalizando Aplicacion");
+                }
+            }
+            else
+            {
 
-            /* Update Prestashop stock table */
+                List<String> listIdProducts = createListIdProducts(connStringMySql, listArticulesUpdated, path);
 
-            updateStock(connStringMySql, listIdProducts);
+                /* Update Prestashop stock table */
+
+                updateStock(connStringMySql, listIdProducts, path);
+                using (StreamWriter writer = new StreamWriter($@"{path}\\LOG\\{DateTime.Now.ToString("dd-MM-yyyy")}.log", true))
+                {
+                    writer.WriteLine("día:" + DateTime.Now.ToString("dd-MM-yyyy") + "  hora:" + DateTime.Now.ToString("HH:mm:ss") + " - Productos actualizados. Finalizando Aplicacion");
+                }
+
+            }
+            using (StreamWriter writer = new StreamWriter($@"{path}\\LOG\\{DateTime.Now.ToString("dd-MM-yyyy")}.log", true))
+            {
+                writer.WriteLine(Environment.NewLine + "-----------------------------------------------------------------------------" + Environment.NewLine);
+            };
         }
 
         /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -55,12 +90,9 @@ namespace UpdateStock
         ///                                                                                                                   ///
         /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-        public static List<String> createListArticules(String connStringMySql)
+        public static List<String> createListArticules(String connStringMySql, String path)
         {
             List<String> list = new List<string>();
-            String path = $"{Path.GetPathRoot(Environment.GetFolderPath(Environment.SpecialFolder.System))}UpdateStock";
-            if (!(Directory.Exists(path)))
-                Directory.CreateDirectory(path);
             try
             {
                 using (MySqlConnection conn = new MySqlConnection(connStringMySql.ToString()))
@@ -95,11 +127,12 @@ namespace UpdateStock
         ///                                                                                                                   ///
         /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-        public static void updateInventoryTable(String connStringMySql, String connStringSqlServer, List<String> list)
+        public static void updateInventoryTable(String connStringMySql, String connStringSqlServer, List<String> list, String path)
         {
-            String path = $"{Path.GetPathRoot(Environment.GetFolderPath(Environment.SpecialFolder.System))}UpdateStock";
-            if (!(Directory.Exists(path)))
-                Directory.CreateDirectory(path);
+            int i = 0;
+            String Stock = "";
+            String StockDestino = "";
+            List<String> listUpdate = new List<String>();
             try
             {
                 using (SqlConnection conn = new SqlConnection(connStringSqlServer))
@@ -112,17 +145,38 @@ namespace UpdateStock
                         using (SqlDataReader rdr = cmd.ExecuteReader())
                         {
                             rdr.Read();
-                            String Stock = rdr[0].ToString();
-                            using (MySqlConnection conn2 = new MySqlConnection(connStringMySql))
+                            Stock = rdr[0].ToString();
+                        }
+                        using (MySqlConnection conn2 = new MySqlConnection(connStringMySql))
+                        {
+                            MySqlCommand cmd2 = new MySqlCommand($"UPDATE InventarioTablas SET Stock = '{Stock}' WHERE Articulo = '{element}';", conn2);
+                            if (conn2.State == ConnectionState.Closed)
+                                conn2.Open();
+                            using (MySqlDataReader rdr2 = cmd2.ExecuteReader())
                             {
-                                MySqlCommand cmd2 = new MySqlCommand($"UPDATE InventarioTablas SET Stock = '{Stock}' WHERE Articulo = '{element}';", conn2);
-                                MySqlCommand cmd3 = new MySqlCommand($"UPDATE InventarioTablas SET xxxFechaHoraActualizacion = now() WHERE Articulo = '{element}';", conn2);
+                                rdr2.Read();
+                                StockDestino = rdr2[0].ToString();
+                            }
+                            if (Stock == StockDestino)
+                            {
+                                continue;
+                            }
+                            else
+                            {
+                                MySqlCommand cmd3 = new MySqlCommand($"UPDATE InventarioTablas SET Stock = '{Stock}' WHERE Articulo = '{element}';", conn2);
+                                MySqlCommand cmd4 = new MySqlCommand($"UPDATE InventarioTablas SET xxxFechaHoraActualizacion = now() WHERE Articulo = '{element}';", conn2);
                                 if (conn2.State == ConnectionState.Closed)
                                     conn2.Open();
-                                cmd2.ExecuteNonQuery();
                                 cmd3.ExecuteNonQuery();
+                                cmd4.ExecuteNonQuery();
+                                i++;
+                                listUpdate.Add(element);
                             }
                         }
+                    }
+                    using (StreamWriter writer = new StreamWriter($@"{path}\\LOG\\{DateTime.Now.ToString("dd-MM-yyyy")}.log", true))
+                    {
+                        writer.WriteLine("día:" + DateTime.Now.ToString("dd-MM-yyyy") + "  hora:" + DateTime.Now.ToString("HH:mm:ss") + " - Candidatos procesados. Total a subir: " + i);
                     }
                 }
             }
@@ -143,23 +197,22 @@ namespace UpdateStock
         ///                                                                                                                   ///
         /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-        public static List<String> createListIdProducts(String connStringMySql)
+        public static List<String> createListIdProducts(String connStringMySql, List<String> listUpdate, String path)
         {
             List<String> list = new List<string>();
-            String path = $"{Path.GetPathRoot(Environment.GetFolderPath(Environment.SpecialFolder.System))}UpdateStock";
-            if (!(Directory.Exists(path)))
-                Directory.CreateDirectory(path);
             try
             {
                 using (MySqlConnection conn = new MySqlConnection(connStringMySql))
                 {
-                    MySqlCommand cmd = new MySqlCommand("SELECT id_products FROM InventarioTablas", conn);
-                    conn.Open();
-                    using (MySqlDataReader rdr = cmd.ExecuteReader())
+                    foreach (String element in listUpdate)
                     {
-                        while (rdr.Read())
+                        MySqlCommand cmd = new MySqlCommand("SELECT id_product FROM InventarioTablas WHERE Articulo = '{element}'", conn);
+                        if (conn.State == ConnectionState.Closed)
+                            conn.Open();
+                        using (MySqlDataReader rdr = cmd.ExecuteReader())
                         {
-                            list.Add(rdr["id_products"].ToString());
+                            rdr.Read();
+                            list.Add(rdr[0].ToString());
                         }
                     }
                 }
@@ -183,11 +236,8 @@ namespace UpdateStock
         ///                                                                                                                   ///
         /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-        public static void updateStock(String connStringMySql, List<String> list)
+        public static void updateStock(String connStringMySql, List<String> list, String path)
         {
-            String path = $"{Path.GetPathRoot(Environment.GetFolderPath(Environment.SpecialFolder.System))}UpdateStock";
-            if (!(Directory.Exists(path)))
-                Directory.CreateDirectory(path);
             try
             {
                 using (MySqlConnection conn = new MySqlConnection(connStringMySql.ToString()))
@@ -207,6 +257,10 @@ namespace UpdateStock
                             if (conn.State == ConnectionState.Closed)
                                 conn.Open();
                             cmd2.ExecuteNonQuery();
+                            using (StreamWriter writer = new StreamWriter($@"{path}\\LOG\\{DateTime.Now.ToString("dd-MM-yyyy")}.log", true))
+                            {
+                                writer.WriteLine("día:" + DateTime.Now.ToString("dd-MM-yyyy") + "  hora:" + DateTime.Now.ToString("HH:mm:ss") + " - Producto actualizado: " + element);
+                            }
                         }
                     }
                 }
