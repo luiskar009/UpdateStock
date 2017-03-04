@@ -29,8 +29,18 @@ namespace UpdateStock
             /* Save the articules to update stock in a list */
 
             List<String> listArticules = createListArticules(connStringMySql);
+
+            /* Update table InventarioTablas */
+
             updateInventoryTable(connStringMySql, connStringSqlServer, listArticules);
-            List<String> listIdProducts = createListArticules(connStringMySql);
+
+            /* Save the id_products to update stock in a list */
+
+            List<String> listIdProducts = createListIdProducts(connStringMySql);
+
+            /* Update Prestashop stock table */
+
+            updateStock(connStringMySql, listIdProducts);
         }
 
         /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -113,5 +123,37 @@ namespace UpdateStock
             }
             return list;
         }//createListIdProducts
+
+        /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+        ///                                                                                                                   ///
+        ///                                       Update Prestashop Articules Stock                                           ///
+        ///                                                                                                                   ///
+        /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+        public static void updateStock(MySqlConnectionStringBuilder connStringMySql, List<String> list)
+        {
+            using (MySqlConnection conn = new MySqlConnection(connStringMySql.ToString()))
+            {
+                foreach (String element in list)
+                {
+                    MySqlCommand cmd = new MySqlCommand($"SELECT Stock FROM InventarioTablas WHERE id_product = '{element}'", conn);
+                    if (conn.State == ConnectionState.Closed)
+                        conn.Open();
+                    using (MySqlDataReader rdr = cmd.ExecuteReader())
+                    {
+                        rdr.Read();
+                        String Stock = rdr[0].ToString();
+                        if (conn.State == ConnectionState.Open)
+                            conn.Close();
+                        MySqlCommand cmd2 = new MySqlCommand($"UPDATE ps_stock_available SET quantity = '{Stock}' WHERE id_product  = '{element}'", conn);
+                        if (conn.State == ConnectionState.Closed)
+                            conn.Open();
+                        cmd2.ExecuteNonQuery();
+                    }
+                }
+
+            }
+
+        }//updateStock
     }
 }
