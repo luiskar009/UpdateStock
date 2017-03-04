@@ -8,13 +8,19 @@ using MySql.Data;
 using MySql.Data.MySqlClient;
 using System.Configuration;
 using System.Data;
-
-
+using System.IO;
 
 namespace UpdateStock
 {
     class Program
     {
+
+        /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+        ///                                                                                                                   ///
+        ///                                               Main Program                                                        ///
+        ///                                                                                                                   ///
+        /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
         static void Main(string[] args)
         {
             /* MySql Connection */
@@ -52,18 +58,34 @@ namespace UpdateStock
         public static List<String> createListArticules(String connStringMySql)
         {
             List<String> list = new List<string>();
-            using (MySqlConnection conn = new MySqlConnection(connStringMySql.ToString()))
+            String path = $"{Path.GetPathRoot(Environment.GetFolderPath(Environment.SpecialFolder.System))}UpdateStock";
+            if (!(Directory.Exists(path)))
+                Directory.CreateDirectory(path);
+            try
             {
-                MySqlCommand cmd = new MySqlCommand("SELECT Articulo FROM InventarioTablas", conn);
-                conn.Open();
-                using (MySqlDataReader rdr = cmd.ExecuteReader())
+                using (MySqlConnection conn = new MySqlConnection(connStringMySql.ToString()))
                 {
-                    while (rdr.Read())
+                    MySqlCommand cmd = new MySqlCommand("SELECT Articulo FROM InventarioTablas", conn);
+                    conn.Open();
+                    using (MySqlDataReader rdr = cmd.ExecuteReader())
                     {
-                        list.Add(rdr["Articulo"].ToString());
+                        while (rdr.Read())
+                        {
+                            list.Add(rdr["Articulo"].ToString());
+                        }
                     }
                 }
             }
+            catch (Exception ex)
+            {
+                using (StreamWriter writer = new StreamWriter($@"{path}\\Error-{DateTime.Now.ToString("dd-MM-yyyy")}.txt", true))
+                {
+                    writer.WriteLine("Message :" + ex.Message + "<br/>" + Environment.NewLine + "StackTrace :" + ex.StackTrace +
+                       "" + Environment.NewLine + "Date :" + DateTime.Now.ToString());
+                    writer.WriteLine(Environment.NewLine + "-----------------------------------------------------------------------------" + Environment.NewLine);
+                }
+            }
+
             return list;
         }//createList
 
@@ -75,27 +97,42 @@ namespace UpdateStock
 
         public static void updateInventoryTable(String connStringMySql, String connStringSqlServer, List<String> list)
         {
-            using (SqlConnection conn = new SqlConnection(connStringSqlServer))
+            String path = $"{Path.GetPathRoot(Environment.GetFolderPath(Environment.SpecialFolder.System))}UpdateStock";
+            if (!(Directory.Exists(path)))
+                Directory.CreateDirectory(path);
+            try
             {
-                foreach (String element in list)
+                using (SqlConnection conn = new SqlConnection(connStringSqlServer))
                 {
-                    SqlCommand cmd = new SqlCommand($"SELECT UnidadesStock FROM ocartacp WHERE Articulo = '{element}'", conn);
-                    if (conn.State == ConnectionState.Closed)
-                        conn.Open();
-                    using (SqlDataReader rdr = cmd.ExecuteReader())
+                    foreach (String element in list)
                     {
-                        rdr.Read();
-                        String Stock = rdr[0].ToString();
-                        using (MySqlConnection conn2 = new MySqlConnection(connStringMySql))
+                        SqlCommand cmd = new SqlCommand($"SELECT UnidadesStock FROM ocartacp WHERE Articulo = '{element}'", conn);
+                        if (conn.State == ConnectionState.Closed)
+                            conn.Open();
+                        using (SqlDataReader rdr = cmd.ExecuteReader())
                         {
-                            MySqlCommand cmd2 = new MySqlCommand($"UPDATE InventarioTablas SET Stock = '{Stock}' WHERE Articulo = '{element}';", conn2);
-                            MySqlCommand cmd3 = new MySqlCommand($"UPDATE InventarioTablas SET xxxFechaHoraActualizacion = now() WHERE Articulo = '{element}';", conn2);
-                            if (conn2.State == ConnectionState.Closed)
-                                conn2.Open();
-                            cmd2.ExecuteNonQuery();
-                            cmd3.ExecuteNonQuery();
+                            rdr.Read();
+                            String Stock = rdr[0].ToString();
+                            using (MySqlConnection conn2 = new MySqlConnection(connStringMySql))
+                            {
+                                MySqlCommand cmd2 = new MySqlCommand($"UPDATE InventarioTablas SET Stock = '{Stock}' WHERE Articulo = '{element}';", conn2);
+                                MySqlCommand cmd3 = new MySqlCommand($"UPDATE InventarioTablas SET xxxFechaHoraActualizacion = now() WHERE Articulo = '{element}';", conn2);
+                                if (conn2.State == ConnectionState.Closed)
+                                    conn2.Open();
+                                cmd2.ExecuteNonQuery();
+                                cmd3.ExecuteNonQuery();
+                            }
                         }
                     }
+                }
+            }
+            catch (Exception ex)
+            {
+                using (StreamWriter writer = new StreamWriter($@"{path}\\Error-{DateTime.Now.ToString("dd-MM-yyyy")}txt", true))
+                {
+                    writer.WriteLine("Message :" + ex.Message + "<br/>" + Environment.NewLine + "StackTrace :" + ex.StackTrace +
+                       "" + Environment.NewLine + "Date :" + DateTime.Now.ToString());
+                    writer.WriteLine(Environment.NewLine + "-----------------------------------------------------------------------------" + Environment.NewLine);
                 }
             }
         }//updateInventoryTable
@@ -109,18 +146,34 @@ namespace UpdateStock
         public static List<String> createListIdProducts(String connStringMySql)
         {
             List<String> list = new List<string>();
-            using (MySqlConnection conn = new MySqlConnection(connStringMySql))
+            String path = $"{Path.GetPathRoot(Environment.GetFolderPath(Environment.SpecialFolder.System))}UpdateStock";
+            if (!(Directory.Exists(path)))
+                Directory.CreateDirectory(path);
+            try
             {
-                MySqlCommand cmd = new MySqlCommand("SELECT id_products FROM InventarioTablas", conn);
-                conn.Open();
-                using (MySqlDataReader rdr = cmd.ExecuteReader())
+                using (MySqlConnection conn = new MySqlConnection(connStringMySql))
                 {
-                    while (rdr.Read())
+                    MySqlCommand cmd = new MySqlCommand("SELECT id_products FROM InventarioTablas", conn);
+                    conn.Open();
+                    using (MySqlDataReader rdr = cmd.ExecuteReader())
                     {
-                        list.Add(rdr["id_products"].ToString());
+                        while (rdr.Read())
+                        {
+                            list.Add(rdr["id_products"].ToString());
+                        }
                     }
                 }
             }
+            catch (Exception ex)
+            {
+                using (StreamWriter writer = new StreamWriter($@"{path}\\Error-{DateTime.Now.ToString("dd-MM-yyyy")}.txt", true))
+                {
+                    writer.WriteLine("Message :" + ex.Message + "<br/>" + Environment.NewLine + "StackTrace :" + ex.StackTrace +
+                       "" + Environment.NewLine + "Date :" + DateTime.Now.ToString());
+                    writer.WriteLine(Environment.NewLine + "-----------------------------------------------------------------------------" + Environment.NewLine);
+                }
+            }
+
             return list;
         }//createListIdProducts
 
@@ -130,30 +183,43 @@ namespace UpdateStock
         ///                                                                                                                   ///
         /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-        public static void updateStock(MySqlConnectionStringBuilder connStringMySql, List<String> list)
+        public static void updateStock(String connStringMySql, List<String> list)
         {
-            using (MySqlConnection conn = new MySqlConnection(connStringMySql.ToString()))
+            String path = $"{Path.GetPathRoot(Environment.GetFolderPath(Environment.SpecialFolder.System))}UpdateStock";
+            if (!(Directory.Exists(path)))
+                Directory.CreateDirectory(path);
+            try
             {
-                foreach (String element in list)
+                using (MySqlConnection conn = new MySqlConnection(connStringMySql.ToString()))
                 {
-                    MySqlCommand cmd = new MySqlCommand($"SELECT Stock FROM InventarioTablas WHERE id_product = '{element}'", conn);
-                    if (conn.State == ConnectionState.Closed)
-                        conn.Open();
-                    using (MySqlDataReader rdr = cmd.ExecuteReader())
+                    foreach (String element in list)
                     {
-                        rdr.Read();
-                        String Stock = rdr[0].ToString();
-                        if (conn.State == ConnectionState.Open)
-                            conn.Close();
-                        MySqlCommand cmd2 = new MySqlCommand($"UPDATE ps_stock_available SET quantity = '{Stock}' WHERE id_product  = '{element}'", conn);
+                        MySqlCommand cmd = new MySqlCommand($"SELECT Stock FROM InventarioTablas WHERE id_product = '{element}'", conn);
                         if (conn.State == ConnectionState.Closed)
                             conn.Open();
-                        cmd2.ExecuteNonQuery();
+                        using (MySqlDataReader rdr = cmd.ExecuteReader())
+                        {
+                            rdr.Read();
+                            String Stock = rdr[0].ToString();
+                            if (conn.State == ConnectionState.Open)
+                                conn.Close();
+                            MySqlCommand cmd2 = new MySqlCommand($"UPDATE ps_stock_available SET quantity = '{Stock}' WHERE id_product  = '{element}'", conn);
+                            if (conn.State == ConnectionState.Closed)
+                                conn.Open();
+                            cmd2.ExecuteNonQuery();
+                        }
                     }
                 }
-
             }
-
+            catch (Exception ex)
+            {
+                using (StreamWriter writer = new StreamWriter($@"{path}\\Error-{DateTime.Now.ToString("dd-MM-yyyy")}.txt", true))
+                {
+                    writer.WriteLine("Message :" + ex.Message + "<br/>" + Environment.NewLine + "StackTrace :" + ex.StackTrace +
+                       "" + Environment.NewLine + "Date :" + DateTime.Now.ToString());
+                    writer.WriteLine(Environment.NewLine + "-----------------------------------------------------------------------------" + Environment.NewLine);
+                }
+            }
         }//updateStock
     }
 }
