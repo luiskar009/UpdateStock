@@ -81,7 +81,7 @@ namespace UpdateStock
             using (StreamWriter writer = new StreamWriter($@"{path}\\LOG\\{DateTime.Now.ToString("dd-MM-yyyy")}.log", true))
             {
                 writer.WriteLine(Environment.NewLine + "-----------------------------------------------------------------------------" + Environment.NewLine);
-            };
+            }
         }
 
         /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -95,7 +95,7 @@ namespace UpdateStock
             List<String> list = new List<string>();
             try
             {
-                using (MySqlConnection conn = new MySqlConnection(connStringMySql.ToString()))
+                using (MySqlConnection conn = new MySqlConnection(connStringMySql))
                 {
                     MySqlCommand cmd = new MySqlCommand("SELECT Articulo FROM InventarioTablas", conn);
                     conn.Open();
@@ -110,7 +110,7 @@ namespace UpdateStock
             }
             catch (Exception ex)
             {
-                using (StreamWriter writer = new StreamWriter($@"{path}\\Error-{DateTime.Now.ToString("dd-MM-yyyy")}.txt", true))
+                using (StreamWriter writer = new StreamWriter($@"{path}\\Error-{DateTime.Now.ToString("dd-MM-yyyy")}.log", true))
                 {
                     writer.WriteLine("Message :" + ex.Message + "<br/>" + Environment.NewLine + "StackTrace :" + ex.StackTrace +
                        "" + Environment.NewLine + "Date :" + DateTime.Now.ToString());
@@ -119,7 +119,7 @@ namespace UpdateStock
             }
 
             return list;
-        }//createList
+        }//createListAritucles
 
         /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         ///                                                                                                                   ///
@@ -127,7 +127,7 @@ namespace UpdateStock
         ///                                                                                                                   ///
         /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-        public static void updateInventoryTable(String connStringMySql, String connStringSqlServer, List<String> list, String path)
+        public static List<String> updateInventoryTable(String connStringMySql, String connStringSqlServer, List<String> list, String path)
         {
             int i = 0;
             String Stock = "";
@@ -149,7 +149,7 @@ namespace UpdateStock
                         }
                         using (MySqlConnection conn2 = new MySqlConnection(connStringMySql))
                         {
-                            MySqlCommand cmd2 = new MySqlCommand($"UPDATE InventarioTablas SET Stock = '{Stock}' WHERE Articulo = '{element}';", conn2);
+                            MySqlCommand cmd2 = new MySqlCommand($"SELECT Stock FROM InventarioTablas WHERE Articulo = '{element}';", conn2);
                             if (conn2.State == ConnectionState.Closed)
                                 conn2.Open();
                             using (MySqlDataReader rdr2 = cmd2.ExecuteReader())
@@ -173,27 +173,32 @@ namespace UpdateStock
                                 listUpdate.Add(element);
                             }
                         }
+
                     }
                     using (StreamWriter writer = new StreamWriter($@"{path}\\LOG\\{DateTime.Now.ToString("dd-MM-yyyy")}.log", true))
                     {
                         writer.WriteLine("día:" + DateTime.Now.ToString("dd-MM-yyyy") + "  hora:" + DateTime.Now.ToString("HH:mm:ss") + " - Candidatos procesados. Total a subir: " + i);
                     }
                 }
+
             }
             catch (Exception ex)
             {
-                using (StreamWriter writer = new StreamWriter($@"{path}\\Error-{DateTime.Now.ToString("dd-MM-yyyy")}txt", true))
+                using (StreamWriter writer = new StreamWriter($@"{path}\\Error-{DateTime.Now.ToString("dd-MM-yyyy")}.log", true))
                 {
                     writer.WriteLine("Message :" + ex.Message + "<br/>" + Environment.NewLine + "StackTrace :" + ex.StackTrace +
                        "" + Environment.NewLine + "Date :" + DateTime.Now.ToString());
                     writer.WriteLine(Environment.NewLine + "-----------------------------------------------------------------------------" + Environment.NewLine);
                 }
             }
+
+            return listUpdate;
         }//updateInventoryTable
+
 
         /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         ///                                                                                                                   ///
-        ///                             Create a List with the id_products to update the stock                                  ///
+        ///                             Create a List with the id_products to update the stock                                ///
         ///                                                                                                                   ///
         /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -206,7 +211,7 @@ namespace UpdateStock
                 {
                     foreach (String element in listUpdate)
                     {
-                        MySqlCommand cmd = new MySqlCommand("SELECT id_product FROM InventarioTablas WHERE Articulo = '{element}'", conn);
+                        MySqlCommand cmd = new MySqlCommand($"SELECT id_product FROM InventarioTablas WHERE Articulo = '{element}'", conn);
                         if (conn.State == ConnectionState.Closed)
                             conn.Open();
                         using (MySqlDataReader rdr = cmd.ExecuteReader())
@@ -219,7 +224,7 @@ namespace UpdateStock
             }
             catch (Exception ex)
             {
-                using (StreamWriter writer = new StreamWriter($@"{path}\\Error-{DateTime.Now.ToString("dd-MM-yyyy")}.txt", true))
+                using (StreamWriter writer = new StreamWriter($@"{path}\\Error-{DateTime.Now.ToString("dd-MM-yyyy")}.log", true))
                 {
                     writer.WriteLine("Message :" + ex.Message + "<br/>" + Environment.NewLine + "StackTrace :" + ex.StackTrace +
                        "" + Environment.NewLine + "Date :" + DateTime.Now.ToString());
@@ -240,7 +245,7 @@ namespace UpdateStock
         {
             try
             {
-                using (MySqlConnection conn = new MySqlConnection(connStringMySql.ToString()))
+                using (MySqlConnection conn = new MySqlConnection(connStringMySql))
                 {
                     foreach (String element in list)
                     {
@@ -267,7 +272,7 @@ namespace UpdateStock
             }
             catch (Exception ex)
             {
-                using (StreamWriter writer = new StreamWriter($@"{path}\\Error-{DateTime.Now.ToString("dd-MM-yyyy")}.txt", true))
+                using (StreamWriter writer = new StreamWriter($@"{path}\\Error-{DateTime.Now.ToString("dd-MM-yyyy")}.log", true))
                 {
                     writer.WriteLine("Message :" + ex.Message + "<br/>" + Environment.NewLine + "StackTrace :" + ex.StackTrace +
                        "" + Environment.NewLine + "Date :" + DateTime.Now.ToString());
@@ -277,3 +282,5 @@ namespace UpdateStock
         }//updateStock
     }
 }
+
+
