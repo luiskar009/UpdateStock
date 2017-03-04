@@ -1,2 +1,2 @@
 # UpdateStock
-Update Stock value from Sql Server to MySql Server using .NET
+UpdateStock is a program that update a Stock Value from a Shop Sql Server database to a Prestashop MySql database.
