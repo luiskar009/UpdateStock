@@ -205,6 +205,7 @@ namespace UpdateStock
         public static DataTable createListIdProducts(String connStringMySql, List<String> listUpdate, String path)
         {
             DataTable products = new DataTable();
+            products.Columns.Add("Producto", typeof(string));
             products.Columns.Add("id_product", typeof(string));
             products.Columns.Add("id_product_attribute", typeof(string));
             try
@@ -213,13 +214,13 @@ namespace UpdateStock
                 {
                     foreach (String element in listUpdate)
                     {
-                        MySqlCommand cmd = new MySqlCommand($"SELECT id_product, id_product_attribute FROM InventarioTablas WHERE Articulo = '{element}'", conn);
+                        MySqlCommand cmd = new MySqlCommand($"SELECT Producto, id_product, id_product_attribute FROM InventarioTablas WHERE Articulo = '{element}'", conn);
                         if (conn.State == ConnectionState.Closed)
                             conn.Open();
                         using (MySqlDataReader rdr = cmd.ExecuteReader())
                         {
                             rdr.Read();
-                            products.Rows.Add(rdr["id_product"].ToString(), rdr["id_product_attribute"].ToString());
+                            products.Rows.Add(rdr["Producto"].ToString(), rdr["id_product"].ToString(), rdr["id_product_attribute"].ToString());
                         }
                     }
                 }
@@ -251,7 +252,7 @@ namespace UpdateStock
                 {
                     foreach (DataRow element in table.Rows)
                     {
-                        MySqlCommand cmd = new MySqlCommand($"SELECT Stock FROM InventarioTablas WHERE id_product = '{element[0]}' AND id_product_attribute = '{element[1]}'", conn);
+                        MySqlCommand cmd = new MySqlCommand($"SELECT Stock FROM InventarioTablas WHERE id_product = '{element[1]}' AND id_product_attribute = '{element[2]}'", conn);
                         if (conn.State == ConnectionState.Closed)
                             conn.Open();
                         using (MySqlDataReader rdr = cmd.ExecuteReader())
@@ -260,11 +261,11 @@ namespace UpdateStock
                             String Stock = rdr["Stock"].ToString();
                             if (conn.State == ConnectionState.Open)
                                 conn.Close();
-                            MySqlCommand cmd2 = new MySqlCommand($"UPDATE ps_stock_available SET quantity = '{Stock}' WHERE id_product  = '{element[0]}' AND id_product_attribute = '{element[1]}'", conn);
+                            MySqlCommand cmd2 = new MySqlCommand($"UPDATE ps_stock_available SET quantity = '{Stock}' WHERE id_product  = '{element[1]}' AND id_product_attribute = '{element[2]}'", conn);
                             if (conn.State == ConnectionState.Closed)
                                 conn.Open();
                             cmd2.ExecuteNonQuery();
-                            using (StreamWriter writer = new StreamWriter($@"{path}\\LOG\\{DateTime.Now.ToString("dd-MM-yyyy")}.log", true))
+                            using (StreamWriter writer = new StreamWriter($@"{path}\\LOG\\{DateTime.Now.ToString("MM-dd-yyyy")}.log", true))
                             {
                                 writer.WriteLine("día:" + DateTime.Now.ToString("dd-MM-yyyy") + "  hora:" + DateTime.Now.ToString("HH:mm:ss") + " - Producto actualizado: " + element[0]);
                             }
