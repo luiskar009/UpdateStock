@@ -266,7 +266,7 @@ namespace UpdateStock
                             cmd2.ExecuteNonQuery();
                             using (StreamWriter writer = new StreamWriter($@"{path}\\LOG\\{DateTime.Now.ToString("dd-MM-yyyy")}.log", true))
                             {
-                                writer.WriteLine("día:" + DateTime.Now.ToString("dd-MM-yyyy") + "  hora:" + DateTime.Now.ToString("HH:mm:ss") + " - Producto actualizado: " + element);
+                                writer.WriteLine("día:" + DateTime.Now.ToString("dd-MM-yyyy") + "  hora:" + DateTime.Now.ToString("HH:mm:ss") + " - Producto actualizado: " + element[0]);
                             }
                         }
                     }
