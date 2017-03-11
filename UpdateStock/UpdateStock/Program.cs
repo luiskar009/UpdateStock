@@ -42,7 +42,7 @@ namespace UpdateStock
 
             /* Inicialize LOG */
 
-            using (StreamWriter writer = new StreamWriter($@"{path}\\LOG\\{DateTime.Now.ToString("dd-MM-yyyy")}.log", true))
+            using (StreamWriter writer = new StreamWriter($@"{path}\\LOG\\{DateTime.Now.ToString("MM-dd-yyyy")}.log", true))
             {
                 writer.WriteLine("día:" + DateTime.Now.ToString("dd-MM-yyyy") + "  hora:" + DateTime.Now.ToString("HH:mm:ss") + " - Arrancando aplicacion");
             }
@@ -59,7 +59,7 @@ namespace UpdateStock
 
             if (listArticulesUpdated.Count == 0)
             {
-                using (StreamWriter writer = new StreamWriter($@"{path}\\LOG\\{DateTime.Now.ToString("dd-MM-yyyy")}.log", true))
+                using (StreamWriter writer = new StreamWriter($@"{path}\\LOG\\{DateTime.Now.ToString("MM-dd-yyyy")}.log", true))
                 {
                     writer.WriteLine("día:" + DateTime.Now.ToString("dd-MM-yyyy") + "  hora:" + DateTime.Now.ToString("HH:mm:ss") + " - Ningun producto necesita actualizacion. Finalizando Aplicacion");
                 }
@@ -72,13 +72,13 @@ namespace UpdateStock
                 /* Update Prestashop stock table */
 
                 updateStock(connStringMySql, IdProducts, path);
-                using (StreamWriter writer = new StreamWriter($@"{path}\\LOG\\{DateTime.Now.ToString("dd-MM-yyyy")}.log", true))
+                using (StreamWriter writer = new StreamWriter($@"{path}\\LOG\\{DateTime.Now.ToString("MM-dd-yyyy")}.log", true))
                 {
                     writer.WriteLine("día:" + DateTime.Now.ToString("dd-MM-yyyy") + "  hora:" + DateTime.Now.ToString("HH:mm:ss") + " - Productos actualizados. Finalizando Aplicacion");
                 }
 
             }
-            using (StreamWriter writer = new StreamWriter($@"{path}\\LOG\\{DateTime.Now.ToString("dd-MM-yyyy")}.log", true))
+            using (StreamWriter writer = new StreamWriter($@"{path}\\LOG\\{DateTime.Now.ToString("MM-dd-yyyy")}.log", true))
             {
                 writer.WriteLine(Environment.NewLine + "-----------------------------------------------------------------------------" + Environment.NewLine);
             }
@@ -110,7 +110,7 @@ namespace UpdateStock
             }
             catch (Exception ex)
             {
-                using (StreamWriter writer = new StreamWriter($@"{path}\\Error-{DateTime.Now.ToString("dd-MM-yyyy")}.log", true))
+                using (StreamWriter writer = new StreamWriter($@"{path}\\Error-{DateTime.Now.ToString("MM-dd-yyyy")}.log", true))
                 {
                     writer.WriteLine("Message :" + ex.Message + "<br/>" + Environment.NewLine + "StackTrace :" + ex.StackTrace +
                        "" + Environment.NewLine + "Date :" + DateTime.Now.ToString());
@@ -175,7 +175,7 @@ namespace UpdateStock
                         }
 
                     }
-                    using (StreamWriter writer = new StreamWriter($@"{path}\\LOG\\{DateTime.Now.ToString("dd-MM-yyyy")}.log", true))
+                    using (StreamWriter writer = new StreamWriter($@"{path}\\LOG\\{DateTime.Now.ToString("MM-dd-yyyy")}.log", true))
                     {
                         writer.WriteLine("día:" + DateTime.Now.ToString("dd-MM-yyyy") + "  hora:" + DateTime.Now.ToString("HH:mm:ss") + " - Candidatos procesados. Total a subir: " + i);
                     }
@@ -184,7 +184,7 @@ namespace UpdateStock
             }
             catch (Exception ex)
             {
-                using (StreamWriter writer = new StreamWriter($@"{path}\\Error-{DateTime.Now.ToString("dd-MM-yyyy")}.log", true))
+                using (StreamWriter writer = new StreamWriter($@"{path}\\Error-{DateTime.Now.ToString("MM-dd-yyyy")}.log", true))
                 {
                     writer.WriteLine("Message :" + ex.Message + "<br/>" + Environment.NewLine + "StackTrace :" + ex.StackTrace +
                        "" + Environment.NewLine + "Date :" + DateTime.Now.ToString());
@@ -227,7 +227,7 @@ namespace UpdateStock
             }
             catch (Exception ex)
             {
-                using (StreamWriter writer = new StreamWriter($@"{path}\\Error-{DateTime.Now.ToString("dd-MM-yyyy")}.log", true))
+                using (StreamWriter writer = new StreamWriter($@"{path}\\Error-{DateTime.Now.ToString("MM-dd-yyyy")}.log", true))
                 {
                     writer.WriteLine("Message :" + ex.Message + "<br/>" + Environment.NewLine + "StackTrace :" + ex.StackTrace +
                        "" + Environment.NewLine + "Date :" + DateTime.Now.ToString());
