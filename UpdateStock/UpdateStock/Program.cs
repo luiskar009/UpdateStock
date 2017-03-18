@@ -103,7 +103,8 @@ namespace UpdateStock
                     {
                         while (rdr.Read())
                         {
-                            list.Add(rdr["Articulo"].ToString());
+                            if(!(rdr["Articulo"].ToString() == "-1"))
+                                list.Add(rdr["Articulo"].ToString());
                         }
                     }
                 }
@@ -198,7 +199,7 @@ namespace UpdateStock
 
         /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         ///                                                                                                                   ///
-        ///                             Create a List with the id_products to update the stock                                ///
+        ///                             Create a DataTable with the id_products to update the stock                                ///
         ///                                                                                                                   ///
         /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
