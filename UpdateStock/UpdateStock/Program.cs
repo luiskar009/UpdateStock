@@ -145,6 +145,15 @@ namespace UpdateStock
                             conn.Open();
                         using (SqlDataReader rdr = cmd.ExecuteReader())
                         {
+                            if (!(rdr.HasRows))
+                            {
+                                using (StreamWriter writer = new StreamWriter($@"{path}\\Error-{DateTime.Now.ToString("MM-dd-yyyy")}.log", true))
+                                {
+                                    writer.WriteLine($"{element} no se encuentra en Odacash, el id del Articulo esta incorrecto en la BD TablaInventario");
+                                    writer.WriteLine(Environment.NewLine + "-----------------------------------------------------------------------------" + Environment.NewLine);
+                                }
+                                continue;
+                            }
                             rdr.Read();
                             Stock = rdr[0].ToString();
                         }
