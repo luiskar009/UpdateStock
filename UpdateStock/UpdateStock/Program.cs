@@ -27,6 +27,8 @@ namespace UpdateStock
 
             String connStringMySql = ConfigurationManager.ConnectionStrings["MySqlDB"].ConnectionString;
 
+            String connStringMySql2 = ConfigurationManager.ConnectionStrings["MySqlDB2"].ConnectionString;
+
 
             /* SqlConnection */
 
@@ -67,11 +69,16 @@ namespace UpdateStock
             else
             {
 
-                DataTable IdProducts = createListIdProducts(connStringMySql, listArticulesUpdated, path);
+                DataTable IdProductsMB = createListIdProducts(connStringMySql, listArticulesUpdated, path, "id_product");
+
+                DataTable IdProductsTPB = createListIdProducts(connStringMySql, listArticulesUpdated, path, "id_product_todo");
 
                 /* Update Prestashop stock table */
 
-                updateStock(connStringMySql, IdProducts, path);
+                updateStock(connStringMySql, IdProductsMB, path, "Mima Bebes");
+
+                updateStock(connStringMySql2, IdProductsTPB, path, "Todo para Bebes");
+
                 using (StreamWriter writer = new StreamWriter($@"{path}\\LOG\\{DateTime.Now.ToString("MM-dd-yyyy")}.log", true))
                 {
                     writer.WriteLine("día:" + DateTime.Now.ToString("dd-MM-yyyy") + "  hora:" + DateTime.Now.ToString("HH:mm:ss") + " - Productos actualizados. Finalizando Aplicacion");
@@ -208,11 +215,11 @@ namespace UpdateStock
 
         /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         ///                                                                                                                   ///
-        ///                             Create a DataTable with the id_products to update the stock                                ///
+        ///                             Create a DataTable with the id_products to update the stock                           ///
         ///                                                                                                                   ///
         /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-        public static DataTable createListIdProducts(String connStringMySql, List<String> listUpdate, String path)
+        public static DataTable createListIdProducts(string connStringMySql, List<string> listUpdate, string path, string column)
         {
             DataTable products = new DataTable();
             products.Columns.Add("Producto", typeof(string));
@@ -224,7 +231,7 @@ namespace UpdateStock
                 {
                     foreach (String element in listUpdate)
                     {
-                        MySqlCommand cmd = new MySqlCommand($"SELECT Producto, id_product, id_product_attribute FROM InventarioTablas WHERE Articulo = '{element}'", conn);
+                        MySqlCommand cmd = new MySqlCommand($"SELECT Producto, id_product, id_product_attribute FROM InventarioTablas WHERE Articulo = '{element}' AND {column} <> '0'", conn);
                         if (conn.State == ConnectionState.Closed)
                             conn.Open();
                         using (MySqlDataReader rdr = cmd.ExecuteReader())
@@ -254,30 +261,30 @@ namespace UpdateStock
         ///                                                                                                                   ///
         /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-        public static void updateStock(String connStringMySql, DataTable table, String path)
+        public static void updateStock(string connStringMySql, DataTable table, string path, string shop)
         {
             try
             {
                 using (MySqlConnection conn = new MySqlConnection(connStringMySql))
                 {
-                    foreach (DataRow element in table.Rows)
+                    using (StreamWriter writer = new StreamWriter($@"{path}\\LOG\\{DateTime.Now.ToString("MM-dd-yyyy")}.log", true))
                     {
+                        foreach (DataRow element in table.Rows)
+                        {
                         MySqlCommand cmd = new MySqlCommand($"SELECT Stock FROM InventarioTablas WHERE id_product = '{element[1]}' AND id_product_attribute = '{element[2]}'", conn);
                         if (conn.State == ConnectionState.Closed)
                             conn.Open();
-                        using (MySqlDataReader rdr = cmd.ExecuteReader())
-                        {
-                            rdr.Read();
-                            String Stock = rdr["Stock"].ToString();
-                            if (conn.State == ConnectionState.Open)
-                                conn.Close();
-                            MySqlCommand cmd2 = new MySqlCommand($"UPDATE ps_stock_available SET quantity = '{Stock}' WHERE id_product  = '{element[1]}' AND id_product_attribute = '{element[2]}'", conn);
-                            if (conn.State == ConnectionState.Closed)
-                                conn.Open();
-                            cmd2.ExecuteNonQuery();
-                            using (StreamWriter writer = new StreamWriter($@"{path}\\LOG\\{DateTime.Now.ToString("MM-dd-yyyy")}.log", true))
+                            using (MySqlDataReader rdr = cmd.ExecuteReader())
                             {
-                                writer.WriteLine("día:" + DateTime.Now.ToString("dd-MM-yyyy") + "  hora:" + DateTime.Now.ToString("HH:mm:ss") + " - Producto actualizado: " + element[0]);
+                                rdr.Read();
+                                String Stock = rdr["Stock"].ToString();
+                                if (conn.State == ConnectionState.Open)
+                                    conn.Close();
+                                MySqlCommand cmd2 = new MySqlCommand($"UPDATE ps_stock_available SET quantity = '{Stock}' WHERE id_product  = '{element[1]}' AND id_product_attribute = '{element[2]}'", conn);
+                                if (conn.State == ConnectionState.Closed)
+                                    conn.Open();
+                                cmd2.ExecuteNonQuery();
+                                writer.WriteLine("día:" + DateTime.Now.ToString("dd-MM-yyyy") + "  hora:" + DateTime.Now.ToString("HH:mm:ss") + $" - Producto actualizado en {shop}: " + element[0]);
                             }
                         }
                     }
